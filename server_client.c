@@ -98,19 +98,7 @@ void *client_receive(void *ptr) {
              // 2. Execute command: TODO
 
 
-            if(strcmp(arguments[0], "create") == 0)
-            {
-               printf("create room: %s\n", arguments[1]); 
-              
-               // perform the operations to create room arg[1]
-               
-
-              
-              
-               sprintf(buffer, "\nchat>");
-               send(client , buffer , strlen(buffer) , 0 ); // send back to client
-            }
-            else if (strcmp(arguments[0], "join") == 0)
+            if (strcmp(arguments[0], "join") == 0)
             {
                printf("join room: %s\n", arguments[1]);  
 
@@ -212,6 +200,20 @@ void *client_receive(void *ptr) {
                   } else {
                      connect_users(client, username, target_username); // Pass to the connection logic
                      }
+            }
+            else if (strcmp(arguments[0], "create") == 0) {
+               char *room_name = arguments[1]; // Extract the room name
+               printf("Room Name: %s\n", room_name);
+
+               if (strlen(room_name) == 0) {
+                  send(client, "Usage: create <room_name>\n", strlen("Usage: create <room_name>\n"), 0);
+                  } else {
+                     if (create_room_command(client, room_name)) {
+                        send(client, "Room created successfully.\n", strlen("Room created successfully.\n"), 0);
+                        } else {
+                           send(client, "Room already exists or creation failed.\n", strlen("Room already exists or creation failed.\n"), 0);
+                        }
+               }
             }
 
             else if (strcmp(arguments[0], "exit") == 0 || strcmp(arguments[0], "logout") == 0)
@@ -318,4 +320,15 @@ void direct_chat(struct node *user1, struct node *user2) {
 
     user1->in_chat = false;
     user2->in_chat = false;
+}
+
+int create_room_command(int client_socket, const char *room_name) {
+    struct room *new_room = create_room(room_name);
+    if (new_room == NULL) {
+        // Room creation failed (already exists or other error)
+        return 0;
+    }
+
+    printf("Room '%s' created by client %d\n", room_name, client_socket); // Log room creation
+    return 1;
 }
